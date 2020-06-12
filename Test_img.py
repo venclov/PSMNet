@@ -34,6 +34,8 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
+parser.add_argument('--imgdirectory', default= './assets/',
+                    help='load model')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -73,16 +75,14 @@ def test(imgL,imgR):
 
         return pred_disp
 
-
-def main():
-
+def single(left_img, right_img, i):
         normal_mean_var = {'mean': [0.485, 0.456, 0.406],
                             'std': [0.229, 0.224, 0.225]}
         infer_transform = transforms.Compose([transforms.ToTensor(),
                                               transforms.Normalize(**normal_mean_var)])    
 
-        imgL_o = Image.open(args.leftimg).convert('RGB')
-        imgR_o = Image.open(args.rightimg).convert('RGB')
+        imgL_o = Image.open(left_img).convert('RGB')
+        imgR_o = Image.open(right_img).convert('RGB')
 
         imgL = infer_transform(imgL_o)
         imgR = infer_transform(imgR_o) 
@@ -116,7 +116,27 @@ def main():
         
         img = (img*256).astype('uint16')
         img = Image.fromarray(img)
-        img.save('Test_disparity.png')
+
+        img.save( "result/" + str(i) + 'disp.png')
+
+
+
+def main():
+    img_directory = args.imgdirectory
+    for i in range(100):
+        if i < 10:
+            num = "0" + str(i)
+        else:
+            num = str(i)
+        left_name = img_directory + 'leftscene_00_00' + str(num) + '.png'
+        right_name = img_directory + 'rightscene_00_00' + str(num) + '.png'
+        try:
+            single(left_name, right_name, i)
+        except:
+            print("ops, exception")
+            break
+
+
 
 if __name__ == '__main__':
    main()
