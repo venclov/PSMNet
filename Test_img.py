@@ -20,7 +20,7 @@ parser.add_argument('--KITTI', default='2015',
                     help='KITTI version')
 parser.add_argument('--datapath', default='/media/jiaren/ImageNet/data_scene_flow_2015/testing/',
                     help='select model')
-parser.add_argument('--loadmodel', default='./trained/pretrained_model_KITTI2015.tar',
+parser.add_argument('--loadmodel', default='./models/pretrained_sceneflow.tar',
                     help='loading model')
 parser.add_argument('--leftimg', default= './VO04_L.png',
                     help='load model')
@@ -34,8 +34,8 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
-parser.add_argument('--imgdirectory', default= './assets/',
-                    help='load model')
+parser.add_argument('--imgdirectory', default= './assets_sceneflow/',
+                    help='image directory')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -110,7 +110,7 @@ def single(left_img, right_img, i):
 
         
         if top_pad !=0 or right_pad != 0:
-            img = pred_disp[top_pad:,:-right_pad]
+            img = pred_disp[top_pad:,:]
         else:
             img = pred_disp
         
@@ -118,6 +118,51 @@ def single(left_img, right_img, i):
         img = Image.fromarray(img)
 
         img.save( "result/" + str(i) + 'disp.png')
+
+def previous_main():
+        normal_mean_var = {'mean': [0.485, 0.456, 0.406],
+                            'std': [0.229, 0.224, 0.225]}
+        infer_transform = transforms.Compose([transforms.ToTensor(),
+                                              transforms.Normalize(**normal_mean_var)])
+
+        imgL_o = Image.open(args.leftimg).convert('RGB')
+        imgR_o = Image.open(args.rightimg).convert('RGB')
+
+        imgL = infer_transform(imgL_o)
+        imgR = infer_transform(imgR_o)
+
+
+        # pad to width and hight to 16 times
+        if imgL.shape[1] % 16 != 0:
+            times = imgL.shape[1]//16
+            top_pad = (times+1)*16 -imgL.shape[1]
+        else:
+            top_pad = 0
+
+        if imgL.shape[2] % 16 != 0:
+            times = imgL.shape[2]//16
+            right_pad = (times+1)*16-imgL.shape[2]
+        else:
+            right_pad = 0
+
+        imgL = F.pad(imgL,(0,right_pad, top_pad,0)).unsqueeze(0)
+        imgR = F.pad(imgR,(0,right_pad, top_pad,0)).unsqueeze(0)
+
+        print(imgL.shape)
+
+        start_time = time.time()
+        pred_disp = test(imgL,imgR)
+        print('time = %.2f' %(time.time() - start_time))
+
+
+        if top_pad !=0 or right_pad != 0:
+            img = pred_disp[top_pad:,:]
+        else:
+            img = pred_disp
+
+        img = (img*256).astype('uint16')
+        img = Image.fromarray(img)
+        img.save('Test_disparity.png')
 
 
 
@@ -132,14 +177,15 @@ def main():
         right_name = img_directory + 'rightscene_00_00' + str(num) + '.png'
         try:
             single(left_name, right_name, i)
-        except:
-            print("ops, exception")
+        except Exception as e:
+            print(e)
             break
 
 
 
 if __name__ == '__main__':
-   main()
+    previous_main()
+   # main()
 
 
 
