@@ -109,8 +109,8 @@ def single(left_img, right_img, i):
         print('time = %.2f' %(time.time() - start_time))
 
         
-        if top_pad !=0 or right_pad != 0:
-            img = pred_disp[top_pad:,:]
+        if top_pad !=0:
+            img = pred_disp[top_pad:,right_pad:]
         else:
             img = pred_disp
         
@@ -170,11 +170,13 @@ def main():
     img_directory = args.imgdirectory
     for i in range(100):
         if i < 10:
-            num = "0" + str(i)
-        else:
+            num = "00" + str(i)
+        elif i >= 100:
             num = str(i)
-        left_name = img_directory + 'leftscene_00_00' + str(num) + '.png'
-        right_name = img_directory + 'rightscene_00_00' + str(num) + '.png'
+        else:
+            num = "0" + str(i)
+        left_name = img_directory + 'leftscene_00_0' + str(num) + '.png'
+        right_name = img_directory + 'rightscene_00_0' + str(num) + '.png'
         try:
             single(left_name, right_name, i)
         except Exception as e:
@@ -184,8 +186,8 @@ def main():
 
 
 if __name__ == '__main__':
-    previous_main()
-   # main()
+   # previous_main()
+    main()
 
 
 
