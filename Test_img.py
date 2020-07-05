@@ -168,7 +168,7 @@ def previous_main():
 
 def main():
     img_directory = args.imgdirectory
-    for i in range(100):
+    for i in range(150):
         if i < 10:
             num = "00" + str(i)
         elif i >= 100:
