@@ -88,9 +88,16 @@ def train(imgL,imgR, disp_L):
             output3 = torch.squeeze(output3,1)
             loss = 0.5*F.smooth_l1_loss(output1[mask], disp_true[mask], size_average=True) + 0.7*F.smooth_l1_loss(output2[mask], disp_true[mask], size_average=True) + F.smooth_l1_loss(output3[mask], disp_true[mask], size_average=True) 
         elif args.model == 'basic':
-            output = model(imgL,imgR)
-            output = torch.squeeze(output,1)
-            loss = F.smooth_l1_loss(output[mask], disp_true[mask], size_average=True)
+            output_pred, output_var  = model(imgL,imgR)
+            output_pred = torch.squeeze(output_pred,1)
+            output_var= torch.squeeze(output_var,1)
+            var_weigth = 1
+            var = output_var * var_weight
+
+            loss_mean = F.smooth_l1_loss(output[mask], disp_true[mask], size_average=True)
+            loss1 = torch.mul(torch.exp(-var), loss_mean)
+            loss2 = var
+            loss = 1/2 * (loss1 + loss2) 
 
         loss.backward()
         optimizer.step()

@@ -38,6 +38,31 @@ class PSMNet(nn.Module):
         self.classify = nn.Sequential(convbn_3d(32, 32, 3, 1, 1),
                                       nn.ReLU(inplace=True),
                                       nn.Conv3d(32, 1, kernel_size=3, padding=1, stride=1,bias=False))
+                                      
+        self.dres0v = nn.Sequential(convbn_3d(64, 32, 3, 1, 1),
+                                     nn.ReLU(inplace=True),
+                                     convbn_3d(32, 32, 3, 1, 1),
+                                     nn.ReLU(inplace=True))
+
+        self.dres1v = nn.Sequential(convbn_3d(32, 32, 3, 1, 1),
+                                   nn.ReLU(inplace=True),
+                                   convbn_3d(32, 32, 3, 1, 1)) 
+
+        self.dres2v = nn.Sequential(convbn_3d(32, 32, 3, 1, 1),
+                                   nn.ReLU(inplace=True),
+                                   convbn_3d(32, 32, 3, 1, 1))
+ 
+        self.dres3v = nn.Sequential(convbn_3d(32, 32, 3, 1, 1),
+                                   nn.ReLU(inplace=True),
+                                   convbn_3d(32, 32, 3, 1, 1)) 
+
+        self.dres4v = nn.Sequential(convbn_3d(32, 32, 3, 1, 1),
+                                   nn.ReLU(inplace=True),
+                                   convbn_3d(32, 32, 3, 1, 1)) 
+ 
+        self.classifyv = nn.Sequential(convbn_3d(32, 32, 3, 1, 1),
+                                      nn.ReLU(inplace=True),
+                                      nn.Conv3d(32, 1, kernel_size=3, padding=1, stride=1,bias=False))
 
 
         for m in self.modules():
@@ -72,9 +97,10 @@ class PSMNet(nn.Module):
             else:
              cost[:, :refimg_fea.size()[1], i, :,:]   = refimg_fea
              cost[:, refimg_fea.size()[1]:, i, :,:]   = targetimg_fea
-        cost = cost.contiguous()
+        cost_global = cost.contiguous()
 
-        cost0 = self.dres0(cost)
+        # mean
+        cost0 = self.dres0(cost_global)
         cost0 = self.dres1(cost0) + cost0
         cost0 = self.dres2(cost0) + cost0 
         cost0 = self.dres3(cost0) + cost0 
@@ -86,4 +112,15 @@ class PSMNet(nn.Module):
         pred = F.softmax(cost)
         pred = disparityregression(self.maxdisp)(pred)
 
-        return pred
+        # variance
+        cost0 = self.dres0v(cost_global)
+        cost0 = self.dres1v(cost0) + cost0
+        cost0 = self.dres2v(cost0) + cost0 
+        cost0 = self.dres3v(cost0) + cost0 
+        cost0 = self.dres4v(cost0) + cost0
+
+        cost = self.classifyv(cost0)
+        cost = F.upsample(cost, [self.maxdisp,left.size()[2],left.size()[3]], mode='trilinear')
+        var = torch.squeeze(cost,1)
+
+        return pred, var
