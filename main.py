@@ -19,11 +19,11 @@ parser.add_argument('--maxdisp', type=int ,default=192,
                     help='maxium disparity')
 parser.add_argument('--model', default='stackhourglass',
                     help='select model')
-parser.add_argument('--datapath', default='/media/jiaren/ImageNet/SceneFlowData/',
+parser.add_argument('--datapath', default='/media/paulius/HDD_paulius/sceneflow_dataset/monkaa/',
                     help='datapath')
 parser.add_argument('--epochs', type=int, default=0,
                     help='number of epochs to train')
-parser.add_argument('--loadmodel', default= './trained/pretrained_sceneflow.tar',
+parser.add_argument('--loadmodel', default= None,
                     help='load model')
 parser.add_argument('--savemodel', default='./',
                     help='save model')
@@ -74,6 +74,8 @@ def train(imgL,imgR, disp_L):
 
         if args.cuda:
             imgL, imgR, disp_true = imgL.cuda(), imgR.cuda(), disp_L.cuda()
+        else:
+            disp_true = disp_L
 
        #---------
         mask = disp_true < args.maxdisp
