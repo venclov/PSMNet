@@ -42,7 +42,7 @@ all_left_img, all_right_img, all_left_disp, test_left_img, test_right_img, test_
 
 TrainImgLoader = torch.utils.data.DataLoader(
          DA.myImageFloder(all_left_img,all_right_img,all_left_disp, True), 
-         batch_size= 12, shuffle= True, num_workers= 8, drop_last=False)
+         batch_size= 1, shuffle= True, num_workers= 8, drop_last=False)
 
 TestImgLoader = torch.utils.data.DataLoader(
          DA.myImageFloder(test_left_img,test_right_img,test_left_disp, False), 
@@ -94,9 +94,9 @@ def train(imgL,imgR, disp_L):
             output_pred = torch.squeeze(output_pred,1)
             output_var= torch.squeeze(output_var,1)
             var_weigth = 1
-            var = output_var * var_weight
+            var = output_var * var_weigth  
 
-            loss_mean = F.smooth_l1_loss(output[mask], disp_true[mask], size_average=True)
+            loss_mean = F.smooth_l1_loss(output_pred[mask], disp_true[mask], size_average=True)
             loss1 = torch.mul(torch.exp(-var), loss_mean)
             loss2 = var
             loss = 1/2 * (loss1 + loss2) 
