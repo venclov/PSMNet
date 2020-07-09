@@ -64,6 +64,8 @@ class PSMNet(nn.Module):
                                       nn.ReLU(inplace=True),
                                       nn.Conv3d(32, 1, kernel_size=3, padding=1, stride=1,bias=False))
 
+        self.conv_var = nn.Conv2d(self.max_disp, 1, 1)
+
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -122,5 +124,7 @@ class PSMNet(nn.Module):
         cost = self.classifyv(cost0)
         cost = F.upsample(cost, [self.maxdisp,left.size()[2],left.size()[3]], mode='trilinear')
         var = torch.squeeze(cost,1)
+        var = self.conv_var(var)
+
 
         return pred, var
