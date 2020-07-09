@@ -19,7 +19,7 @@ parser.add_argument('--maxdisp', type=int ,default=192,
                     help='maxium disparity')
 parser.add_argument('--model', default='stackhourglass',
                     help='select model')
-parser.add_argument('--datapath', default='/media/paulius/HDD_paulius/sceneflow_dataset/monkaa/',
+parser.add_argument('--datapath', default='/home/AzureUser/sceneflow_dataset/',
                     help='datapath')
 parser.add_argument('--epochs', type=int, default=0,
                     help='number of epochs to train')
