@@ -124,7 +124,7 @@ def single(left_img, right_img, i):
         img_unc = Image.fromarray(img_unc)
 
         img.save( "result/" + str(i) + 'disp.png')
-        img.save( "result/uncerainty_" + str(i) + 'disp.png')
+        img_unc.save( "result/uncerainty_" + str(i) + 'disp.png')
 
 def previous_main():
         normal_mean_var = {'mean': [0.485, 0.456, 0.406],
