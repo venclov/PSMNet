@@ -119,12 +119,10 @@ def single(left_img, right_img, i):
             img_unc = pred_uncertainty 
         
         img = (img*256).astype('uint16')
-        img_unc = (img_unc*256).astype('uint16')
         img = Image.fromarray(img)
-        img_unc = Image.fromarray(img_unc)
 
         img.save( "result/" + str(i) + 'disp.png')
-        img_unc.save( "result/uncerainty_" + str(i) + 'disp.png')
+        np.savetxt( "result/uncerainty_" + str(i) + 'disp.txt', img_unc)
 
 def previous_main():
         normal_mean_var = {'mean': [0.485, 0.456, 0.406],
