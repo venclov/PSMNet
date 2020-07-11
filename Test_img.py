@@ -191,8 +191,8 @@ def main():
 
 
 if __name__ == '__main__':
-    previous_main()
-   # main()
+   # previous_main()
+    main()
 
 
 
