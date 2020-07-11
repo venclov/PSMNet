@@ -68,12 +68,14 @@ def test(imgL,imgR):
            imgR = imgR.cuda()     
 
         with torch.no_grad():
-            disp = model(imgL,imgR)
+            disp, uncertainty = model(imgL,imgR)
 
         disp = torch.squeeze(disp)
+        uncertainty = torch.squeeze(uncertainty)
         pred_disp = disp.data.cpu().numpy()
+        pred_uncertainty = uncertainty.data.cpu().numpy()
 
-        return pred_disp
+        return pred_disp, pred_uncertainty
 
 def single(left_img, right_img, i):
         normal_mean_var = {'mean': [0.485, 0.456, 0.406],
@@ -105,19 +107,24 @@ def single(left_img, right_img, i):
         imgR = F.pad(imgR,(0,right_pad, top_pad,0)).unsqueeze(0)
 
         start_time = time.time()
-        pred_disp = test(imgL,imgR)
+        pred_disp, pred_uncertainty = test(imgL,imgR)
         print('time = %.2f' %(time.time() - start_time))
 
         
         if top_pad !=0 or right_pad != 0:
             img = pred_disp[top_pad:,:]
+            img_unc = pred_uncertainty[top_pad:,:]
         else:
             img = pred_disp
+            img_unc = pred_uncertainty 
         
         img = (img*256).astype('uint16')
+        img_unc = (img_unc*256).astype('uint16')
         img = Image.fromarray(img)
+        img_unc = Image.fromarray(img_unc)
 
         img.save( "result/" + str(i) + 'disp.png')
+        img.save( "result/uncerainty_" + str(i) + 'disp.png')
 
 def previous_main():
         normal_mean_var = {'mean': [0.485, 0.456, 0.406],
