@@ -13,6 +13,8 @@ import math
 from dataloader import listflowfile as lt
 from dataloader import SecenFlowLoader as DA
 from models import *
+from torch.utils.tensorboard import SummaryWriter
+
 
 parser = argparse.ArgumentParser(description='PSMNet')
 parser.add_argument('--maxdisp', type=int ,default=192,
@@ -46,7 +48,10 @@ TrainImgLoader = torch.utils.data.DataLoader(
 
 TestImgLoader = torch.utils.data.DataLoader(
          DA.myImageFloder(test_left_img,test_right_img,test_left_disp, False), 
-         batch_size= 8, shuffle= False, num_workers= 4, drop_last=False)
+         batch_size= 3, shuffle= False, num_workers= 4, drop_last=False)
+
+writer = SummaryWriter()
+
 
 
 if args.model == 'stackhourglass':
@@ -156,48 +161,50 @@ def adjust_learning_rate(optimizer, epoch):
 
 
 def main():
+    start_full_time = time.time()
+    for epoch in range(0, args.epochs):
+        print('This is %d-th epoch' %(epoch))
+        total_train_loss = 0
+        adjust_learning_rate(optimizer,epoch)
 
-	start_full_time = time.time()
-	for epoch in range(0, args.epochs):
-	   print('This is %d-th epoch' %(epoch))
-	   total_train_loss = 0
-	   adjust_learning_rate(optimizer,epoch)
+        # training ##
+        for batch_idx, (imgL_crop, imgR_crop, disp_crop_L) in enumerate(TrainImgLoader):
+            start_time = time.time()
+            loss = train(imgL_crop,imgR_crop, disp_crop_L)
+            print('Iter %d training loss = %.3f , time = %.2f' %(batch_idx, loss, time.time() - start_time))
+            total_train_loss += loss
+                
+            if batch_idx % 3 == 0:
+                writer.add_scalar('Loss/train', loss, batch_idx)
 
-	   ## training ##
-	   for batch_idx, (imgL_crop, imgR_crop, disp_crop_L) in enumerate(TrainImgLoader):
-	     start_time = time.time()
 
-	     loss = train(imgL_crop,imgR_crop, disp_crop_L)
-	     print('Iter %d training loss = %.3f , time = %.2f' %(batch_idx, loss, time.time() - start_time))
-	     total_train_loss += loss
-	   print('epoch %d total training loss = %.3f' %(epoch, total_train_loss/len(TrainImgLoader)))
-
-	   #SAVE
-	   savefilename = args.savemodel+'/checkpoint_'+str(epoch)+'.tar'
-	   torch.save({
-		    'epoch': epoch,
-		    'state_dict': model.state_dict(),
+        print('epoch %d total training loss = %.3f' %(epoch, total_train_loss/len(TrainImgLoader)))
+        #SAVE
+        savefilename = args.savemodel+'/checkpoint_'+str(epoch)+'.tar'
+        torch.save({
+            'epoch': epoch,
+            'state_dict': model.state_dict(),
                     'train_loss': total_train_loss/len(TrainImgLoader),
-		}, savefilename)
+        }, savefilename)
 
-	print('full training time = %.2f HR' %((time.time() - start_full_time)/3600))
+    print('full training time = %.2f HR' %((time.time() - start_full_time)/3600))
 
-	#------------- TEST ------------------------------------------------------------
-	total_test_loss = 0
-	for batch_idx, (imgL, imgR, disp_L) in enumerate(TestImgLoader):
-	       test_loss = test(imgL,imgR, disp_L)
-	       print('Iter %d test loss = %.3f' %(batch_idx, test_loss))
-	       total_test_loss += test_loss
+	# #------------- TEST ------------------------------------------------------------
+	# total_test_loss = 0
+	# for batch_idx, (imgL, imgR, disp_L) in enumerate(TestImgLoader):
+	#        test_loss = test(imgL,imgR, disp_L)
+	#        print('Iter %d test loss = %.3f' %(batch_idx, test_loss))
+	#        total_test_loss += test_loss
 
-	print('total test loss = %.3f' %(total_test_loss/len(TestImgLoader)))
-	#----------------------------------------------------------------------------------
-	#SAVE test information
-	savefilename = args.savemodel+'testinformation.tar'
-	torch.save({
-		    'test_loss': total_test_loss/len(TestImgLoader),
-		}, savefilename)
+	# print('total test loss = %.3f' %(total_test_loss/len(TestImgLoader)))
+	# #----------------------------------------------------------------------------------
+	# #SAVE test information
+	# savefilename = args.savemodel+'testinformation.tar'
+	# torch.save({
+	# 	    'test_loss': total_test_loss/len(TestImgLoader),
+	# 	}, savefilename)
 
 
 if __name__ == '__main__':
-   main()
+    main()
     
