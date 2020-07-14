@@ -50,7 +50,7 @@ TestImgLoader = torch.utils.data.DataLoader(
          DA.myImageFloder(test_left_img,test_right_img,test_left_disp, False), 
          batch_size= 3, shuffle= False, num_workers= 4, drop_last=False)
 
-writer = SummaryWriter()
+writer = SummaryWriter('/vol/bitbucket/pv819/logs')
 
 
 
