@@ -39,11 +39,14 @@ class myImageFloder(data.Dataset):
         right = self.right[index]
         disp_L= self.disp_L[index]
 
-
-        left_img = self.loader(left)
-        right_img = self.loader(right)
-        dataL, scaleL = self.dploader(disp_L)
-        dataL = np.ascontiguousarray(dataL,dtype=np.float32)
+        try:
+            left_img = self.loader(left)
+            right_img = self.loader(right)
+            dataL, scaleL = self.dploader(disp_L)
+            dataL = np.ascontiguousarray(dataL,dtype=np.float32)
+        except OSError:
+            print(f"Got OSError on files {left} , {right} and {disp_L}")
+            return self.__getitem__(np.random.randint(0, len(self)))
 
         if self.training:  
             w, h = left_img.size
