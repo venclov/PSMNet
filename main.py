@@ -44,13 +44,13 @@ all_left_img, all_right_img, all_left_disp, test_left_img, test_right_img, test_
 
 TrainImgLoader = torch.utils.data.DataLoader(
          DA.myImageFloder(all_left_img,all_right_img,all_left_disp, True), 
-         batch_size= 3, shuffle= True, num_workers= 8, drop_last=False)
+         batch_size= 2, shuffle= True, num_workers= 8, drop_last=False)
 
 TestImgLoader = torch.utils.data.DataLoader(
-         DA.myImageFloder(test_left_img,test_right_img,test_left_disp, False), 
-         batch_size= 3, shuffle= False, num_workers= 8, drop_last=False)
+         DA.myImageFloder(test_left_img[:100],test_right_img[:100],test_left_disp[:100], False), 
+         batch_size= 2, shuffle= False, num_workers= 4, drop_last=False)
 
-writer = SummaryWriter('/vol/bitbucket/pv819/logs')
+writer = SummaryWriter('/vol/bitbucket/pv819/logs_validate')
 
 
 
@@ -96,6 +96,7 @@ def train(imgL,imgR, disp_L):
             loss = 0.5*F.smooth_l1_loss(output1[mask], disp_true[mask], size_average=True) + 0.7*F.smooth_l1_loss(output2[mask], disp_true[mask], size_average=True) + F.smooth_l1_loss(output3[mask], disp_true[mask], size_average=True) 
         elif args.model == 'basic':
             output_pred, output_var  = model(imgL,imgR)
+            print('After model Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
             output_pred = torch.squeeze(output_pred,1)
             output_var= torch.squeeze(output_var,1)
             var_weigth = 1
@@ -107,6 +108,7 @@ def train(imgL,imgR, disp_L):
             loss = 1/2 * (loss1 + loss2)
             loss_mean = loss.mean() 
 
+        print('Before mean Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
         loss_mean.backward()
         optimizer.step()
 
@@ -130,7 +132,9 @@ def validate(imgL,imgR,disp_L):
             output3 = torch.squeeze(output3,1)
             loss = 0.5*F.smooth_l1_loss(output1[mask], disp_true[mask], size_average=True) + 0.7*F.smooth_l1_loss(output2[mask], disp_true[mask], size_average=True) + F.smooth_l1_loss(output3[mask], disp_true[mask], size_average=True) 
         elif args.model == 'basic':
+            # print('Before model Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
             output_pred, output_var  = model(imgL,imgR)
+            # print('Before after Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
             output_pred = torch.squeeze(output_pred,1)
             output_var= torch.squeeze(output_var,1)
             var_weigth = 1
@@ -214,14 +218,17 @@ def main():
                 # log loss
                 writer.add_scalar('Loss/train', loss, batch_idx + epoch_len * epoch)
 
-            # if batch_idx % 1000 == 0:
-            #     # validate model
-            #     with torch.no_grad():
-            #         total_val_loss = 0
-            #         for batch_idx_v, (imgL_crop_v, imgR_crop_v, disp_crop_L_v) in enumerate(TestImgLoader):
-            #             loss_v = validate(imgL_crop_v,imgR_crop_v, disp_crop_L_v)
-            #             total_val_loss += loss_v
-            #         writer.add_scalar('Loss/validation', total_val_loss / len(TestImgLoader), batch_idx + epoch_len * epoch)
+            if batch_idx % 5 == 0:
+                # validate model
+                # print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
+                with torch.no_grad():
+                    total_val_loss = 0
+                    for batch_idx_v, (imgL_crop_v, imgR_crop_v, disp_crop_L_v) in enumerate(TestImgLoader):
+                        loss_v = validate(imgL_crop_v,imgR_crop_v, disp_crop_L_v)
+                        total_val_loss += loss_v
+                    writer.add_scalar('Loss/validation', total_val_loss / len(TestImgLoader), batch_idx + epoch_len * epoch)
+                    # print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
+
 
 
         print('epoch %d total training loss = %.3f' %(epoch, total_train_loss/len(TrainImgLoader)))
