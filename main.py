@@ -44,13 +44,13 @@ all_left_img, all_right_img, all_left_disp, test_left_img, test_right_img, test_
 
 TrainImgLoader = torch.utils.data.DataLoader(
          DA.myImageFloder(all_left_img,all_right_img,all_left_disp, True), 
-         batch_size= 2, shuffle= True, num_workers= 8, drop_last=False)
+         batch_size= 3, shuffle= True, num_workers= 8, drop_last=False)
 
-TestImgLoader = torch.utils.data.DataLoader(
-         DA.myImageFloder(test_left_img[:100],test_right_img[:100],test_left_disp[:100], False), 
-         batch_size= 2, shuffle= False, num_workers= 4, drop_last=False)
+# TestImgLoader = torch.utils.data.DataLoader(
+#          DA.myImageFloder(test_left_img[:100],test_right_img[:100],test_left_disp[:100], False), 
+#          batch_size= 2, shuffle= False, num_workers= 4, drop_last=False)
 
-writer = SummaryWriter('/vol/bitbucket/pv819/logs_validate')
+writer = SummaryWriter('/vol/bitbucket/pv819/logs_validate/further/')
 
 
 
@@ -218,15 +218,15 @@ def main():
                 # log loss
                 writer.add_scalar('Loss/train', loss, batch_idx + epoch_len * epoch)
 
-            if batch_idx % 5 == 0:
-                # validate model
-                # print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
-                with torch.no_grad():
-                    total_val_loss = 0
-                    for batch_idx_v, (imgL_crop_v, imgR_crop_v, disp_crop_L_v) in enumerate(TestImgLoader):
-                        loss_v = validate(imgL_crop_v,imgR_crop_v, disp_crop_L_v)
-                        total_val_loss += loss_v
-                    writer.add_scalar('Loss/validation', total_val_loss / len(TestImgLoader), batch_idx + epoch_len * epoch)
+            # if batch_idx % 5 == 0:
+            #     # validate model
+            #     # print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
+            #     with torch.no_grad():
+            #         total_val_loss = 0
+            #         for batch_idx_v, (imgL_crop_v, imgR_crop_v, disp_crop_L_v) in enumerate(TestImgLoader):
+            #             loss_v = validate(imgL_crop_v,imgR_crop_v, disp_crop_L_v)
+            #             total_val_loss += loss_v
+            #         writer.add_scalar('Loss/validation', total_val_loss / len(TestImgLoader), batch_idx + epoch_len * epoch)
                     # print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
 
 
