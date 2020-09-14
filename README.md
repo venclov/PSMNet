@@ -6,5 +6,9 @@ PSMNET basic Network is extented with aleatoric uncertainty according to [What U
 
 Uncertainty values are predicted in a seperate branch, which branchs out from cost volume:
 
+![psmnet_uncertainty](psmnet_fig.png)
+
+
+
 Loss function was changed to:
 
