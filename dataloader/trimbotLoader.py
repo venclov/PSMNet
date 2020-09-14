@@ -1,3 +1,4 @@
+
 import os
 import torch
 import torch.utils.data as data
@@ -9,6 +10,8 @@ from . import preprocess
 from . import listflowfile as lt
 from . import readpfm as rp
 import numpy as np
+
+
 
 IMG_EXTENSIONS = [
     '.jpg', '.JPG', '.jpeg', '.JPEG',
@@ -22,7 +25,10 @@ def default_loader(path):
     return Image.open(path).convert('RGB')
 
 def disparity_loader(path):
-    return rp.readPFM(path)
+    with open(path, 'rb') as f:
+        x = np.fromfile(f, dtype='>f4', sep='')
+        a = np.reshape(x, [480, 640], order='F')
+    return a
 
 class myImageFloder(data.Dataset):
     def __init__(self, left, right, left_disparity, training, loader=default_loader, dploader= disparity_loader):
@@ -39,14 +45,11 @@ class myImageFloder(data.Dataset):
         right = self.right[index]
         disp_L= self.disp_L[index]
 
-        try:
-            left_img = self.loader(left)
-            right_img = self.loader(right)
-            dataL, scaleL = self.dploader(disp_L)
-            dataL = np.ascontiguousarray(dataL,dtype=np.float32)
-        except OSError:
-            print(f"Got OSError on files {left} , {right} and {disp_L}")
-            return self.__getitem__(np.random.randint(0, len(self)))
+
+        left_img = self.loader(left)
+        right_img = self.loader(right)
+        dataL, scaleL = self.dploader(disp_L)
+        dataL = np.ascontiguousarray(dataL,dtype=np.float32)
 
         if self.training:  
             w, h = left_img.size
